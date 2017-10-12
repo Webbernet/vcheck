@@ -1,7 +1,7 @@
 require 'net/http'
 require 'uri'
 
-FAILURE_THRESHOLD_COUNT             = 30
+FAILURE_THRESHOLD_COUNT             = 40
 SUCCESS_IN_A_ROW_THRESHOLD_COUNT    = 5
 WAIT_SECONDS                        = 30
 CHECK_TEXT                          = ARGV[0]
