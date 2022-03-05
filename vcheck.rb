@@ -1,11 +1,12 @@
 require 'net/http'
 require 'uri'
+require 'logger'
 
-FAILURE_THRESHOLD_COUNT             = 50
-SUCCESS_IN_A_ROW_THRESHOLD_COUNT    = 5
-WAIT_SECONDS                        = 30
-CHECK_TEXT                          = ARGV[0]
-CHECK_URL                           = ARGV[1]
+SUCCESS_IN_A_ROW_THRESHOLD_COUNT    = ENV['SUCCESS_THRESHOLD'] || 5
+FAILURE_THRESHOLD_COUNT             = ENV['FAILURE_THRESHOLD'] || 50
+WAIT_SECONDS                        = ENV['WAIT_SECONDS'] || 30
+CHECK_TEXT                          = ENV['VERSION_TEXT']
+CHECK_URL                           = ENV['URL']
 
 class CompareVersion
   def self.run
@@ -15,8 +16,14 @@ class CompareVersion
   def self.page_content
     Net::HTTP.get(URI.parse(CHECK_URL)).to_s
   rescue
-    puts 'Error accessing URL'
+    SendToLog.call('Error accessing URL')
     ''
+  end
+end
+
+class SendToLog
+  def self.call(msg)
+    Logger.new('/proc/1/fd/1').info(msg)
   end
 end
 
@@ -28,7 +35,8 @@ class VersionChecker
 
   def run
     FAILURE_THRESHOLD_COUNT.times do |i|
-      puts "Checking for new version (#{i + 1}/#{FAILURE_THRESHOLD_COUNT})"
+      SendToLog.call("--------")
+      SendToLog.call("(#{i + 1}/#{FAILURE_THRESHOLD_COUNT}) Checking for new version '#{CHECK_TEXT}'")
       return hard_success if check_success
       CompareVersion.run ? success! : failure!
       sleep WAIT_SECONDS
@@ -39,7 +47,7 @@ class VersionChecker
   private
 
   def success!
-    puts 'New version found'
+    SendToLog.call('New version found')
     @successful += 1
   end
 
@@ -56,8 +64,29 @@ class VersionChecker
   end
 
   def hard_success
-    puts 'New version is live!'
+    SendToLog.call('New version is live!')
   end
 end
 
+
+class Bootup
+  def self.run
+    banner = "
+░██╗░░░░░░░██╗███████╗██████╗░██████╗░███████╗██████╗░███╗░░██╗███████╗████████╗
+░██║░░██╗░░██║██╔════╝██╔══██╗██╔══██╗██╔════╝██╔══██╗████╗░██║██╔════╝╚══██╔══╝
+░╚██╗████╗██╔╝█████╗░░██████╦╝██████╦╝█████╗░░██████╔╝██╔██╗██║█████╗░░░░░██║░░░
+░░████╔═████║░██╔══╝░░██╔══██╗██╔══██╗██╔══╝░░██╔══██╗██║╚████║██╔══╝░░░░░██║░░░
+░░╚██╔╝░╚██╔╝░███████╗██████╦╝██████╦╝███████╗██║░░██║██║░╚███║███████╗░░░██║░░░
+░░░╚═╝░░░╚═╝░░╚══════╝╚═════╝░╚═════╝░╚══════╝╚═╝░░╚═╝╚═╝░░╚══╝╚══════╝░░░╚═╝░░░
+"
+
+    SendToLog.call(banner)
+    SendToLog.call("Loading version checker...")
+    SendToLog.call("Checking #{CHECK_URL} for #{CHECK_TEXT}")
+    SendToLog.call("Checking #{FAILURE_THRESHOLD_COUNT} times")
+  end
+end
+
+raise 'Missing parameters' if CHECK_TEXT.nil? || CHECK_URL.nil?
+Bootup.run
 VersionChecker.new.run
