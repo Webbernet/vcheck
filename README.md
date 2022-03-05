@@ -21,7 +21,7 @@ webbernet/version-checker
 | Name | Required | |
 | ------------- |-------------| -----|
 | URL  | Yes | This is the URL that we will host the version information |
-| VERSION_TEXT | Yes | This is the version we will be searching for in the URL |
+| VERSION_TEXT | Yes | This is the version we will be searching for when visiting the URL. We recommend using the git sha. |
 | FAILURE_THRESHOLD | - |  How many times to check the URL before we think there is a problem. Depending on your setup some deployments can take a long time to rollout to all servers. Default is 50. |
 | WAIT_SECONDS | - | How long should we wait in between checks? Default is 30 seconds |
 | SUCCESS_THRESHOLD | - | How many time will finding the correct version (in a row) count as an overall success? Should you have lots of servers and you want to ensure rollout to all of them, you can increase this. Default 5 |
